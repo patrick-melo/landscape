@@ -1,0 +1,85 @@
+version: '2'
+volumes:
+  landscape-ssl: {}
+  landscape-data: {}
+  postgres-data: {}
+  landscape-config: {}
+services:
+  jobber-landscape:
+    image: blacklabelops/jobber:docker
+    environment:
+      JOB_NAME1: maintenance-updates
+      JOB_COMMAND1: docker exec landscape sudo -u landscape bash -x /opt/canonical/landscape/scripts/maintenance.sh
+      JOB_TIME1: 0 0 3 * * *
+      JOB_ON_ERROR1: Continue
+      JOB_NAME2: update-security-db
+      JOB_COMMAND2: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_security_db.sh
+      JOB_TIME2: 0 0 * * * *
+      JOB_ON_ERROR2: Continue
+      JOB_NAME3: update-alerts
+      JOB_COMMAND3: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_alerts.sh
+      JOB_TIME3: 0 15 * * * *
+      JOB_ON_ERROR3: Continue
+      JOB_NAME4: update-profiles
+      JOB_COMMAND4: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/landscape_profiles.sh
+      JOB_TIME4: 0 30 * * * *
+      JOB_ON_ERROR4: Continue
+      JOB_NAME5: process-alerts
+      JOB_COMMAND5: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/process_alerts.sh
+      JOB_TIME5: 0 45 * * * *
+      JOB_ON_ERROR5: Continue
+      JOB_NAME6: update-meta-release
+      JOB_COMMAND6: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/meta_releases.sh
+      JOB_TIME6: 0 30 2 * * *
+      JOB_ON_ERROR6: Continue
+      JOB_NAME7: sync-lds-releases
+      JOB_COMMAND7: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/sync_lds_releases.sh
+      JOB_TIME7: 0 45 2 * * *
+      JOB_ON_ERROR7: Continue
+      JOB_NAME8: hash-id-databases
+      JOB_COMMAND8: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/hash_id_databases.sh
+      JOB_TIME8: 0 30 3 * * 0
+      JOB_ON_ERROR8: Continue
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  rabbitmq:
+    image: rabbitmq:3.7.14-management
+  landscape:
+    image: konvergence/landscape:19.01
+    hostname: landscape-demo.yourdomain.lan
+    depends_on:
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    ports:
+     - "80:80"
+     - "443:443"
+    environment:
+      DB_HOST: postgres
+      DB_LANDSCAPE_PASS: password
+      DB_PASS: password
+      DB_PORT: '5432'
+      DB_USER: postgres
+      INITIALIZE_SCHEMA: 'yes'
+      UPGRADE_SCHEMA: 'yes'
+      RMQ_HOST: rabbitmq
+      STARTUP_WAIT_TIME: '15'
+      SMTP_HOST: yourstmpserver
+      SMTP_PORT: '587'
+      SMTP_USER: user@mail.lan
+      SMTP_FROM: landscape-demo@yourdomain.lan
+      SMTP_PASS: password
+      SMTP_TLS: 'yes'
+      SMTP_AUTH: 'yes'
+      SMTP_DOMAIN: yourdomain.lan
+    volumes:
+    - landscape-config:/etc/landscape
+    - landscape-data:/var/lib/landscape
+    - landscape-ssl:/etc/ssl
+  postgres:
+    image: konvergence/postgres-plpython:10.7
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+    - postgres-data:/var/lib/postgresql/data
