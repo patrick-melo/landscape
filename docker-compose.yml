@@ -4,6 +4,7 @@ volumes:
   landscape-data: {}
   postgres-data: {}
   landscape-config: {}
+  openldap_data: {}
 services:
   jobber-landscape:
     image: blacklabelops/jobber:docker
@@ -43,6 +44,7 @@ services:
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
   rabbitmq:
+    platform: linux/amd64
     image: rabbitmq:3.7.14-management
   landscape:
     image: konvergence/landscape:19.01
@@ -51,6 +53,8 @@ services:
       postgres:
         condition: service_started
       rabbitmq:
+        condition: service_started
+      openldap:
         condition: service_started
     ports:
      - "80:80"
@@ -77,9 +81,22 @@ services:
     - landscape-config:/etc/landscape
     - landscape-data:/var/lib/landscape
     - landscape-ssl:/etc/ssl
+    - ./assets/ldap.conf:/opt/canonical/ldap/etc/ldap.conf
   postgres:
     image: konvergence/postgres-plpython:10.7
     environment:
       POSTGRES_PASSWORD: password
     volumes:
     - postgres-data:/var/lib/postgresql/data
+  openldap:
+    image: docker.io/bitnami/openldap:latest
+    ports:
+      - '1389:1389'
+      - '1636:1636'
+    environment:
+      - LDAP_ADMIN_USERNAME=admin
+      - LDAP_ADMIN_PASSWORD=adminpassword
+      - LDAP_USERS=user01,user02
+      - LDAP_PASSWORDS=password1,password2
+    volumes:
+      - openldap_data:/bitnami/openldap
