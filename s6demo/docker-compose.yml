@@ -1,0 +1,6 @@
+version: '2'
+services:
+  s6demo:
+    build: .
+    hostname: s6demo
+

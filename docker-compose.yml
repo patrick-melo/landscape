@@ -8,6 +8,7 @@ volumes:
 services:
   jobber-landscape:
     image: blacklabelops/jobber:docker
+    hostname: jobber-landscape
     environment:
       JOB_NAME1: maintenance-updates
       JOB_COMMAND1: docker exec landscape sudo -u landscape bash -x /opt/canonical/landscape/scripts/maintenance.sh
@@ -46,9 +47,10 @@ services:
   rabbitmq:
     platform: linux/amd64
     image: rabbitmq:3.7.14-management
+    hostname: rabbitmq
   landscape:
     image: konvergence/landscape:19.01
-    hostname: landscape-demo.yourdomain.lan
+    hostname: landscape-server
     depends_on:
       postgres:
         condition: service_started
@@ -82,7 +84,9 @@ services:
     - landscape-data:/var/lib/landscape
     - landscape-ssl:/etc/ssl
     - ./assets/ldap.conf:/opt/canonical/ldap/etc/ldap.conf
+    - ./assets/landscape.conf:/etc/apache2/sites-available/landscape.conf
   postgres:
+    hostname: postgres
     image: konvergence/postgres-plpython:10.7
     environment:
       POSTGRES_PASSWORD: password
@@ -90,6 +94,7 @@ services:
     - postgres-data:/var/lib/postgresql/data
   openldap:
     image: docker.io/bitnami/openldap:latest
+    hostname: openldap
     ports:
       - '1389:1389'
       - '1636:1636'
@@ -100,3 +105,9 @@ services:
       - LDAP_PASSWORDS=password1,password2
     volumes:
       - openldap_data:/bitnami/openldap
+  s6demo:
+    build: s6demo
+    hostname: s6demo
+    volumes:
+      - ./assets/landscape_server_ca.crt:/etc/ssl/certs/landscape_server_ca.crt
+
