@@ -6,40 +6,40 @@ volumes:
   landscape-config: {}
   openldap_data: {}
 services:
-  jobber-landscape:
+  jobber:
     image: blacklabelops/jobber:docker
-    hostname: jobber-landscape
+    hostname: jobber
     environment:
       JOB_NAME1: maintenance-updates
-      JOB_COMMAND1: docker exec landscape sudo -u landscape bash -x /opt/canonical/landscape/scripts/maintenance.sh
+      JOB_COMMAND1: docker exec landscape-server-1 sudo -u landscape bash -x /opt/canonical/landscape/scripts/maintenance.sh
       JOB_TIME1: 0 0 3 * * *
       JOB_ON_ERROR1: Continue
       JOB_NAME2: update-security-db
-      JOB_COMMAND2: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_security_db.sh
+      JOB_COMMAND2: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_security_db.sh
       JOB_TIME2: 0 0 * * * *
       JOB_ON_ERROR2: Continue
       JOB_NAME3: update-alerts
-      JOB_COMMAND3: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_alerts.sh
+      JOB_COMMAND3: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_alerts.sh
       JOB_TIME3: 0 15 * * * *
       JOB_ON_ERROR3: Continue
       JOB_NAME4: update-profiles
-      JOB_COMMAND4: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/landscape_profiles.sh
+      JOB_COMMAND4: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/landscape_profiles.sh
       JOB_TIME4: 0 30 * * * *
       JOB_ON_ERROR4: Continue
       JOB_NAME5: process-alerts
-      JOB_COMMAND5: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/process_alerts.sh
+      JOB_COMMAND5: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/process_alerts.sh
       JOB_TIME5: 0 45 * * * *
       JOB_ON_ERROR5: Continue
       JOB_NAME6: update-meta-release
-      JOB_COMMAND6: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/meta_releases.sh
+      JOB_COMMAND6: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/meta_releases.sh
       JOB_TIME6: 0 30 2 * * *
       JOB_ON_ERROR6: Continue
       JOB_NAME7: sync-lds-releases
-      JOB_COMMAND7: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/sync_lds_releases.sh
+      JOB_COMMAND7: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/sync_lds_releases.sh
       JOB_TIME7: 0 45 2 * * *
       JOB_ON_ERROR7: Continue
       JOB_NAME8: hash-id-databases
-      JOB_COMMAND8: docker exec landscape  sudo -u landscape bash -x /opt/canonical/landscape/scripts/hash_id_databases.sh
+      JOB_COMMAND8: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/hash_id_databases.sh
       JOB_TIME8: 0 30 3 * * 0
       JOB_ON_ERROR8: Continue
     volumes:
@@ -48,9 +48,9 @@ services:
     platform: linux/amd64
     image: rabbitmq:3.7.14-management
     hostname: rabbitmq
-  landscape:
+  server:
     image: konvergence/landscape:19.01
-    hostname: landscape-server
+    hostname: landscape-server # must match crt for use by landscape-config
     depends_on:
       postgres:
         condition: service_started
@@ -83,8 +83,8 @@ services:
     - landscape-config:/etc/landscape
     - landscape-data:/var/lib/landscape
     - landscape-ssl:/etc/ssl
-    - ./assets/ldap.conf:/opt/canonical/ldap/etc/ldap.conf
-    - ./assets/landscape.conf:/etc/apache2/sites-available/landscape.conf
+    - ./ldap/assets/ldap.conf:/opt/canonical/ldap/etc/ldap.conf
+    - ./server/assets/apache-landscape.conf:/etc/apache2/sites-available/landscape.conf
   postgres:
     hostname: postgres
     image: konvergence/postgres-plpython:10.7
@@ -109,5 +109,5 @@ services:
     build: s6demo
     hostname: s6demo
     volumes:
-      - ./assets/landscape_server_ca.crt:/etc/ssl/certs/landscape_server_ca.crt
+      - ./server/assets/certs/landscape_server_ca.crt:/etc/ssl/certs/landscape_server_ca.crt
 
