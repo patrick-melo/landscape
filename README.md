@@ -12,8 +12,8 @@ The service runs at:
 
 At the welcome screen, provide the following credentials:
 
-    Identity: user01
-    Passphrase: password1
+    Identity: user1
+    Passphrase: password
 
 # Register a client
 Use the following command to register the demo client:

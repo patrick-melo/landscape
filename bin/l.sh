@@ -3,6 +3,19 @@ error() { echo $@ ; exit 1 ; }
 id() { docker ps --format "table {{.ID}}\t{{.Names}}"| awk '$2 ~ /^'$1'/ {print $1}' ; }
 usage() { echo "Usage: $@" ; exit 1 ; }
 
+cmd_clean() {
+    echo "=> Remove docker images"
+    docker images | awk '/blacklabelops\/jobber/ || /rabbitmq/ || /konvergence\/landscape/ || /konvergence\/postgres-plpython/ || /bitnami\/openldap/ || /landscape-s6demo/ {print $3}' | xargs docker rmi -f
+    
+    echo "=> Prune containers"
+    docker container prune --force >/dev/null
+    
+    echo "=> Remove docker volumes"
+    for x in landscape-ssl landscape-data postgres-data landscape-config openldap_data ; do
+        docker volume rm landscape_$x >/dev/null 2>&1
+    done
+}
+
 cmd_debug() { bash -x $THIS "$@" ; }
 
 cmd_ldap() {
@@ -19,9 +32,9 @@ cmd_ldap_install() { cmd_shell_server 'apt-get update && apt-get install -y vim 
 cmd_ldap_list() { cmd_shell_server 'ldapsearch -x -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword -H ldap://openldap:1389/' ; }
 
 cmd_ldap_test() {
-    cmd_shell_server "ldapwhoami -H ldap://openldap:1389/ -D 'cn=admin,dc=example,dc=org' -x -w adminpassword"
-    cmd_shell_server "ldapwhoami -H ldap://openldap:1389/ -D 'cn=user01,ou=users,dc=example,dc=org' -x -w password1"
-    cmd_shell_server "ldapwhoami -H ldap://openldap:1389/ -D 'cn=user02,ou=users,dc=example,dc=org' -x -w password2"
+    cmd_shell_server "ldapwhoami -H ldap://openldap:1389/ -D 'cn=admin,dc=example,dc=org' -x -w password"
+    cmd_shell_server "ldapwhoami -H ldap://openldap:1389/ -D 'cn=user1,ou=users,dc=example,dc=org' -x -w password"
+    cmd_shell_server "ldapwhoami -H ldap://openldap:1389/ -D 'cn=user2,ou=users,dc=example,dc=org' -x -w password"
 }
 
 cmd_make() {
@@ -50,10 +63,6 @@ cmd_run() {
     docker-compose up  --remove-orphans
 }
 
-cmd_rmi() {
-    docker images | awk '/landscape-s6demo/ || /bitnami\/openldap/ || /rabbitmq/ || /konvergence\/landscape/ || /konvergence\/postgres-plpython/ || /blacklabelops\/jobber/ {print $3}' | xargs docker rmi -f
-}
-
 cmd_sh() {
     service=$1
     [ -z "$service" ] && service=server
@@ -76,12 +85,12 @@ cmd_version() {
 main() {
     CMD=$1 ; shift
     case "$CMD" in
+        clean) cmd_clean "$@" ;;
         debug) cmd_debug "$@" ;;
         make) cmd_make "$@" ;;
         init) cmd_init "$@" ;;
         ldap) cmd_ldap "$@" ;;
-        register) cmd_register "$@" ;;
-        rmi) cmd_rmi "$@" ;;
+        register|reg) cmd_register "$@" ;;
         run) cmd_run "$@" ;;
         sh) cmd_sh "$@" ;;
         version|ver) cmd_version "$@" ;;

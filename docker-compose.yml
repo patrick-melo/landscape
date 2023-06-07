@@ -83,7 +83,7 @@ services:
     - landscape-config:/etc/landscape
     - landscape-data:/var/lib/landscape
     - landscape-ssl:/etc/ssl
-    - ./ldap/assets/ldap.conf:/opt/canonical/ldap/etc/ldap.conf
+    - ./server/assets/ldap.conf:/opt/canonical/ldap/etc/ldap.conf
     - ./server/assets/apache-landscape.conf:/etc/apache2/sites-available/landscape.conf
   postgres:
     hostname: postgres
@@ -100,9 +100,9 @@ services:
       - '1636:1636'
     environment:
       - LDAP_ADMIN_USERNAME=admin
-      - LDAP_ADMIN_PASSWORD=adminpassword
-      - LDAP_USERS=user01,user02
-      - LDAP_PASSWORDS=password1,password2
+      - LDAP_ADMIN_PASSWORD=password
+      - LDAP_USERS=user1,user2
+      - LDAP_PASSWORDS=password,password
     volumes:
       - openldap_data:/bitnami/openldap
   s6demo:
