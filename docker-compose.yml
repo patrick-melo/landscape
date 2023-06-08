@@ -6,6 +6,7 @@ volumes:
   landscape-config: {}
   openldap_data: {}
 services:
+
   jobber:
     image: blacklabelops/jobber:docker
     hostname: jobber
@@ -44,13 +45,15 @@ services:
       JOB_ON_ERROR8: Continue
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+
   rabbitmq:
     platform: linux/amd64
     image: rabbitmq:3.7.14-management
     hostname: rabbitmq
+
   server:
-    image: konvergence/landscape:19.01
-    hostname: landscape-server # must match crt for use by landscape-config
+    build: server
+    hostname: server # must match crt for use by landscape-config
     depends_on:
       postgres:
         condition: service_started
@@ -85,13 +88,16 @@ services:
     - landscape-ssl:/etc/ssl
     - ./server/assets/ldap.conf:/opt/canonical/ldap/etc/ldap.conf
     - ./server/assets/apache-landscape.conf:/etc/apache2/sites-available/landscape.conf
+    - ./server/assets/entrypoint.sh:/sbin/entrypoint.sh
+
   postgres:
+    build: postgres
     hostname: postgres
-    image: konvergence/postgres-plpython:10.7
     environment:
       POSTGRES_PASSWORD: password
     volumes:
     - postgres-data:/var/lib/postgresql/data
+
   openldap:
     image: docker.io/bitnami/openldap:latest
     hostname: openldap
@@ -105,9 +111,9 @@ services:
       - LDAP_PASSWORDS=password,password
     volumes:
       - openldap_data:/bitnami/openldap
+
   s6demo:
     build: s6demo
     hostname: s6demo
     volumes:
-      - ./server/assets/certs/landscape_server_ca.crt:/etc/ssl/certs/landscape_server_ca.crt
-
+      - ./server/assets/certs/landscape_server.pem:/etc/ssl/certs/landscape_server.pem

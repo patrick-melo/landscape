@@ -5,13 +5,13 @@ usage() { echo "Usage: $@" ; exit 1 ; }
 
 cmd_clean() {
     echo "=> Remove docker images"
-    docker images | awk '/blacklabelops\/jobber/ || /rabbitmq/ || /konvergence\/landscape/ || /konvergence\/postgres-plpython/ || /bitnami\/openldap/ || /landscape-s6demo/ {print $3}' | xargs docker rmi -f
-    
+    docker images | awk '/blacklabelops\/jobber/ || /rabbitmq/ || /konvergence\/landscape/ || /konvergence\/postgres-plpython/ || /bitnami\/openldap/ || /landscape-s6demo/ || /landscape-server/ || /landscape-postgres/ {print $3}' | xargs docker rmi -f >/dev/null 2>&1
+
     echo "=> Prune containers"
-    docker container prune --force >/dev/null
+    docker container prune --force >/dev/null 2>&1
     
     echo "=> Remove docker volumes"
-    for x in landscape-ssl landscape-data postgres-data landscape-config openldap_data ; do
+    for x in landscape-ssl landscape-data postgres-data landscape-config openldap_data landscape-postgres ; do
         docker volume rm landscape_$x >/dev/null 2>&1
     done
 }
@@ -27,7 +27,7 @@ cmd_ldap() {
     esac
 }
 
-cmd_ldap_install() { cmd_shell_server 'apt-get update && apt-get install -y vim iputils-ping ldap-utils' ;}
+cmd_ldap_install() { cmd_shell_server 'apt-get update && apt-get install -y vim iputils-ping net-tools ldap-utils' ;}
 
 cmd_ldap_list() { cmd_shell_server 'ldapsearch -x -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword -H ldap://openldap:1389/' ; }
 
@@ -50,7 +50,9 @@ cmd_make() {
     docker build --no-cache -t $name .
 }
 
-cmd_register() { cmd_shell_s6demo 'landscape-config --silent --computer-title "My First Computer" --account-name standalone --url https://landscape-server/message-system --ping-url http://landscape-server/ping --ssl-public-key /etc/ssl/certs/landscape_server_ca.crt' ; }
+cmd_pull () { cd $THIS_DIR ; git pull ; }
+
+cmd_register() { cmd_shell_s6demo 'landscape-config --silent --computer-title `hostname` --account-name standalone --url https://server/message-system --ping-url http://server/ping --ssl-public-key /etc/ssl/certs/landscape_server.pem' ; }
 
 cmd_run() { 
     case "$1" in
@@ -74,6 +76,16 @@ cmd_shell_server() { docker exec -it $(id landscape-server-1) /bin/bash -c "$@" 
 
 cmd_shell_s6demo() { docker exec -it $(id landscape-s6demo-1) /bin/bash -c "$@" ; }
 
+cmd_tls() {
+    cd $THIS_DIR/server/assets/certs
+
+    name=server
+    file=landscape_server
+    info="\n\n\n\n\n$name\n\n"
+    echo -e $info | openssl req -new -newkey rsa:2048 -nodes -days 3650 -keyout $file.key -out $file.crt >/dev/null 2>&1
+    openssl x509 -req -sha256 -days 3650 -in $file.crt -signkey $file.key -out $file.pem >/dev/null 2>&1
+}
+
 cmd_version() {
     format="%-16s%s\n"
     printf $format "Client:"    "$(cmd_shell_s6demo 'landscape-config --version')"
@@ -88,14 +100,15 @@ main() {
     case "$CMD" in
         clean) cmd_clean "$@" ;;
         debug) cmd_debug "$@" ;;
-        make) cmd_make "$@" ;;
-        init) cmd_init "$@" ;;
         ldap) cmd_ldap "$@" ;;
+        make) cmd_make "$@" ;;
+        pull) cmd_pull "$@" ;;
         register|reg) cmd_register "$@" ;;
         run) cmd_run "$@" ;;
         sh) cmd_sh "$@" ;;
+        tls) cmd_tls "$@" ;;
         version|ver) cmd_version "$@" ;;
-        *) usage "l [ 'make' | 'run' | 'sh' | 'test' ]" ;;
+        *) usage "l [ 'clean'| 'register' | 'run' | 'sh' ]" ;;
     esac
 }
 
