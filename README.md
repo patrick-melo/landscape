@@ -20,6 +20,15 @@ Use the following command to register the demo client:
 
     bin/l.sh register
 
+# Version
+The following information can be retrieved with `bin/l.sh ver`.
+
+    Client:         18.01-0ubuntu13
+    Landscape:      19.01-0ubuntu2
+    Ubuntu:         Ubuntu 18.04.2 LTS
+    Docker          Docker version 23.0.5, build bc4487a
+    Repo            v1.0.0-9-g35f15a9-dirty
+
 # Resources
 * [Landscape image](https://hub.docker.com/r/konvergence/landscape/)
 * [OpenLDAP](https://hub.docker.com/r/bitnami/openldap/)

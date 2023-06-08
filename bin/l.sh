@@ -76,10 +76,11 @@ cmd_shell_s6demo() { docker exec -it $(id landscape-s6demo-1) /bin/bash -c "$@" 
 
 cmd_version() {
     format="%-16s%s\n"
+    printf $format "Client:"    "$(cmd_shell_s6demo 'landscape-config --version')"
+    printf $format "Landscape:" "$(cmd_shell_server 'dpkg -s  landscape-server'| awk '/Version/ {print $2}')"
     printf $format "Ubuntu:"    "$(cmd_shell_server 'lsb_release -ds')"
-    printf $format "Landscape:" "$(cmd_shell_server 'apt list landscape-server 2>/dev/null' | grep -v Listing | sed -r 's/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g')"
+    printf $format "Docker"     "$(docker --version)"
     printf $format "Repo"       "$(cd $THIS_DIR ; git describe --dirty)"
-    printf $format "Docker"       "$(docker --version)"
 }
 
 main() {
