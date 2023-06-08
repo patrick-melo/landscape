@@ -52,7 +52,7 @@ cmd_make() {
 
 cmd_pull () { cd $THIS_DIR ; git pull ; }
 
-cmd_register() { cmd_shell_s6demo 'landscape-config --silent --computer-title `hostname` --account-name standalone --url https://server/message-system --ping-url http://server/ping --ssl-public-key /etc/ssl/certs/landscape_server.pem' ; }
+cmd_register() { cmd_shell_s6demo 'landscape-config --silent --computer-title `hostname` --account-name standalone --url https://server/message-system --ping-url http://server/ping --ssl-public-key /etc/ssl/certs/landscape_server.pem --script-users=ALL' ; }
 
 cmd_run() { 
     case "$1" in
