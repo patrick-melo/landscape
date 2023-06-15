@@ -18,16 +18,15 @@ cmd_clean() {
 
 cmd_debug() { bash -x $THIS "$@" ; }
 
+cmd_install() { cmd_shell_server 'apt-get update && apt-get install -y vim iputils-ping net-tools ldap-utils mailutils' ;}
+
 cmd_ldap() {
     case $1 in
-        install) cmd_ldap_install ;;
         list) cmd_ldap_list ;;
         test) cmd_ldap_test ;;
         *) usage "l ldap ['test']" ;;
     esac
 }
-
-cmd_ldap_install() { cmd_shell_server 'apt-get update && apt-get install -y vim iputils-ping net-tools ldap-utils' ;}
 
 cmd_ldap_list() { cmd_shell_server 'ldapsearch -x -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword -H ldap://openldap:1389/' ; }
 
@@ -100,6 +99,7 @@ main() {
     case "$CMD" in
         clean) cmd_clean "$@" ;;
         debug) cmd_debug "$@" ;;
+        install) cmd_install "$@" ;;
         ldap) cmd_ldap "$@" ;;
         make) cmd_make "$@" ;;
         pull) cmd_pull "$@" ;;

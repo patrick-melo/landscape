@@ -1,50 +1,10 @@
 version: '2'
 volumes:
-  landscape-ssl: {}
-  landscape-data: {}
-  postgres-data: {}
   landscape-config: {}
-  openldap_data: {}
+  landscape-data: {}
+  landscape-ssl: {}
+  postgres-data: {}
 services:
-
-  jobber:
-    image: blacklabelops/jobber:docker
-    hostname: jobber
-    environment:
-      JOB_NAME1: maintenance-updates
-      JOB_COMMAND1: docker exec landscape-server-1 sudo -u landscape bash -x /opt/canonical/landscape/scripts/maintenance.sh
-      JOB_TIME1: 0 0 3 * * *
-      JOB_ON_ERROR1: Continue
-      JOB_NAME2: update-security-db
-      JOB_COMMAND2: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_security_db.sh
-      JOB_TIME2: 0 0 * * * *
-      JOB_ON_ERROR2: Continue
-      JOB_NAME3: update-alerts
-      JOB_COMMAND3: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/update_alerts.sh
-      JOB_TIME3: 0 15 * * * *
-      JOB_ON_ERROR3: Continue
-      JOB_NAME4: update-profiles
-      JOB_COMMAND4: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/landscape_profiles.sh
-      JOB_TIME4: 0 30 * * * *
-      JOB_ON_ERROR4: Continue
-      JOB_NAME5: process-alerts
-      JOB_COMMAND5: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/process_alerts.sh
-      JOB_TIME5: 0 45 * * * *
-      JOB_ON_ERROR5: Continue
-      JOB_NAME6: update-meta-release
-      JOB_COMMAND6: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/meta_releases.sh
-      JOB_TIME6: 0 30 2 * * *
-      JOB_ON_ERROR6: Continue
-      JOB_NAME7: sync-lds-releases
-      JOB_COMMAND7: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/sync_lds_releases.sh
-      JOB_TIME7: 0 45 2 * * *
-      JOB_ON_ERROR7: Continue
-      JOB_NAME8: hash-id-databases
-      JOB_COMMAND8: docker exec landscape-server-1  sudo -u landscape bash -x /opt/canonical/landscape/scripts/hash_id_databases.sh
-      JOB_TIME8: 0 30 3 * * 0
-      JOB_ON_ERROR8: Continue
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
 
   rabbitmq:
     platform: linux/amd64
@@ -58,8 +18,6 @@ services:
       postgres:
         condition: service_started
       rabbitmq:
-        condition: service_started
-      openldap:
         condition: service_started
     ports:
      - "80:80"
@@ -97,20 +55,6 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
     - postgres-data:/var/lib/postgresql/data
-
-  openldap:
-    image: docker.io/bitnami/openldap:latest
-    hostname: openldap
-    ports:
-      - '1389:1389'
-      - '1636:1636'
-    environment:
-      - LDAP_ADMIN_USERNAME=admin
-      - LDAP_ADMIN_PASSWORD=password
-      - LDAP_USERS=user1,user2
-      - LDAP_PASSWORDS=password,password
-    volumes:
-      - openldap_data:/bitnami/openldap
 
   s6demo:
     build: s6demo

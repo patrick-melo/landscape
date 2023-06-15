@@ -10,11 +10,6 @@ The service runs at:
 
     https://localhost/
 
-At the welcome screen, provide the following credentials:
-
-    Identity: user1
-    Passphrase: password
-
 # Register a client
 Use the following command to register the demo client:
 
